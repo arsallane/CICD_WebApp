@@ -5,59 +5,26 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - run: dotnet restore
+      - run: dotnet build --configuration Release --no-restore
+      - run: dotnet publish webapplication1.csproj --configuration Release --output ./publish
 
-      - name: Build app
-        run: dotnet build --configuration Release --no-restore
-
-      - name: Publish app
-        run: dotnet publish webapplication1.csproj --configuration Release --output ./publish
-
-      - name: Upload published app
-        uses: actions/upload-artifact@v4
-        with:
-          name: webapp-artifact
-          path: ./publish
-
-  deploy:
-    needs: build
-    if:  success()  
-    runs-on: ubuntu-latest
-    environment:
-      name: production
-
-    steps:
-      - name: Download published app
-        uses: actions/download-artifact@v4
-        with:
-          name: webapp-artifact
-          path: ./publish
-
-      - name: Azure login
-        uses: azure/login@v2
+      - uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
+      - uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
           package: ./publish
-
