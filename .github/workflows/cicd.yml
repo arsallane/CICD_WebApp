@@ -1,0 +1,12 @@
+# ci cd github actions pipelines
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+ 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
